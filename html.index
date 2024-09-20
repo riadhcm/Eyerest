@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Rest Reminder</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1E1E1E;
+            color: #E0E0E0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        #timer {
+            font-size: clamp(48px, 15vw, 96px);
+            font-weight: 200;
+            margin-bottom: 5vh;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            font-size: clamp(14px, 3vw, 16px);
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            color: #E0E0E0;
+            border: 1px solid #E0E0E0;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #E0E0E0;
+            color: #1E1E1E;
+        }
+        #message {
+            font-size: clamp(14px, 3vw, 18px);
+            margin-top: 5vh;
+            font-weight: 300;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            #controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            button {
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="timer">20:00</div>
+        <div id="controls">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn">Stop</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const timer = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const message = document.getElementById('message');
+
+        let interval;
+        let timeLeft = 1200; // 20 minutes in seconds
+        let isResting = false;
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function playNotificationSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function startTimer() {
+            interval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+
+                if (timeLeft === 0) {
+                    clearInterval(interval);
+                    playNotificationSound();
+                    if (!isResting) {
+                        message.textContent = "Look 20 feet away for 20 seconds.";
+                        timeLeft = 20;
+                        isResting = true;
+                        startTimer();
+                    } else {
+                        message.textContent = "Rest complete. Starting next cycle.";
+                        timeLeft = 1200;
+                        isResting = false;
+                        startTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(interval);
+        }
+
+        function resetTimer() {
+            clearInterval(interval);
+            timeLeft = 1200;
+            isResting = false;
+            message.textContent = "";
+            updateTimer();
+        }
+
+        startBtn.addEventListener('click', () => {
+            clearInterval(interval);
+            startTimer();
+        });
+
+        stopBtn.addEventListener('click', stopTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        updateTimer();
+    </script>
+</body>
+</html>
